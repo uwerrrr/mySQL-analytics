@@ -68,74 +68,58 @@ ALTER TABLE dataset_cleaned
 
 
 ## DATABASE NORMALISATION
-### Countries Table
--- DROP TABLE Countries;
--- create
-CREATE TABLE Countries (
-    CountryID INT AUTO_INCREMENT PRIMARY KEY,
-    CountryName VARCHAR(255) UNIQUE
-    );
--- populate
-INSERT INTO Countries (CountryName)
-	SELECT DISTINCT Country FROM dataset_cleaned; 
+
+### Countries table
+CREATE TABLE countries AS
+	SELECT DISTINCT Country AS CountryName
+	FROM dataset_cleaned;
+ALTER TABLE countries
+	ADD COLUMN CountryID INT AUTO_INCREMENT PRIMARY KEY;
 -- check
-SELECT * FROM Countries;
--- add CountryID to dataset_cleaned
-ALTER TABLE dataset_cleaned
-	ADD COLUMN CountryID INT;
-ALTER TABLE dataset_cleaned
-	ADD FOREIGN KEY (CountryID) REFERENCES Countries(CountryID);
-UPDATE dataset_cleaned AS dc 
-	JOIN Countries AS c ON dc.Country = c.CountryName
-	SET dc.CountryID = c.CountryID
-	WHERE  dc.Country = c.CountryName AND dc.DatasetID > 0;
+SELECT * FROM countries;
 
-
-
-### Customer Table
--- DROP TABLE Customers;
--- create
-CREATE TABLE Customers (
-    CustomerID INT PRIMARY KEY
-);
-
--- populate
-INSERT INTO Customers (CustomerID)
-	SELECT DISTINCT CustomerID FROM dataset_cleaned; 
-    
+### customers table
+CREATE TABLE customers AS
+	SELECT DISTINCT CustomerID AS CustomerID
+	FROM dataset_cleaned;
+ALTER TABLE customers
+	ADD PRIMARY KEY (CustomerID);
 -- check
-SELECT * FROM Customers;
+SELECT * FROM customers;
 
-
-### CustomerCountry table
--- create
-CREATE TABLE CustomerCountry(
-    CustomerID INT NOT NULL,
-    CountryID INT NOT NULL,
-    PRIMARY KEY(CustomerID, CountryID),
-    FOREIGN KEY(CustomerID) REFERENCES Customers(CustomerID),
-    FOREIGN KEY(CountryID) REFERENCES Countries(CountryID)
-);
-
--- populate
-INSERT INTO CustomerCountry (CustomerID, CountryID)
-	SELECT c.CustomerID, d.CountryID
-	FROM dataset_cleaned d
-	JOIN Customers c ON d.CustomerID = c.CustomerID
-	JOIN Countries cntry ON d.CountryID = cntry.CountryID;
-
-
+### customers_countries table
+CREATE TABLE customers_countries AS
+	SELECT DISTINCT dc.CustomerID AS CustomerID, c.CountryID AS CountryID
+	FROM dataset_cleaned dc
+	JOIN countries c ON dc.Country = c.CountryName;
+ALTER TABLE customers_countries
+	ADD PRIMARY KEY(CustomerID, CountryID),
+    ADD FOREIGN KEY (CustomerID) REFERENCES customers(CustomerID),
+    ADD FOREIGN KEY (CountryID) REFERENCES countries(CountryID);
 -- check
-SELECT * FROM CustomerCountry;
+SELECT * FROM customers_countries;
 
+### products table
+CREATE TABLE products AS
+	SELECT DISTINCT StockCode, Description, UnitPrice
+    FROM dataset_cleaned;
+ALTER TABLE products
+	ADD COLUMN ProductsID INT AUTO_INCREMENT PRIMARY KEY;
+-- check
+SELECT * FROM products;
 
-
-
-
-
-
-
-
+### invoices table
+DROP TABLE invoices;
+CREATE TABLE invoices AS
+	SELECT DISTINCT dc.InvoiceNo, dc.InvoiceDate, dc.UnitPrice, c.CustomerID
+    FROM dataset_cleaned dc
+    JOIN customers c ON dc.CustomerID = c.CustomerID;
+ALTER TABLE invoices
+	ADD COLUMN InvoicesID INT AUTO_INCREMENT PRIMARY KEY,
+	ADD FOREIGN KEY (CustomerID) REFERENCES customers(CustomerID);
+-- check
+SELECT * FROM invoices;
+###
 
 
 #### Note
@@ -155,3 +139,10 @@ FROM dataset_cleaned
 GROUP BY CustomerID
 HAVING Count > 1;
 
+-- add CountryID to dataset_cleaned table
+ALTER TABLE dataset_cleaned
+	ADD COLUMN CountryID INT;
+UPDATE dataset_cleaned dc
+	JOIN countries c ON dc.Country = c.CountryName
+	SET dc.CountryID = c.CountryID 
+    WHERE DatasetID > 0;
