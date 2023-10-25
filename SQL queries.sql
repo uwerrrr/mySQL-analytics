@@ -1,9 +1,3 @@
-SHOW TABLES;
-SELECT * FROM dataset;
-
-DROP TABLE dataset;
-
-
 ## Create database
 CREATE DATABASE ecommerce;
 USE ecommerce;
@@ -32,8 +26,6 @@ LOAD DATA INFILE "/usr/local/mysql-8.1.0-macos13-x86_64/to-import-data/dataset/d
 
 
 ## CLEAN dataset
-DROP TABLE dataset_cleaned;
-
 CREATE TABLE dataset_cleaned AS
 	SELECT * FROM dataset_ori;
 ALTER TABLE dataset_cleaned
@@ -104,45 +96,36 @@ CREATE TABLE products AS
 	SELECT DISTINCT StockCode, Description, UnitPrice
     FROM dataset_cleaned;
 ALTER TABLE products
-	ADD COLUMN ProductsID INT AUTO_INCREMENT PRIMARY KEY;
+	ADD COLUMN ProductID INT AUTO_INCREMENT PRIMARY KEY;
 -- check
 SELECT * FROM products;
 
 ### invoices table
-DROP TABLE invoices;
 CREATE TABLE invoices AS
-	SELECT DISTINCT dc.InvoiceNo, dc.InvoiceDate, dc.UnitPrice, c.CustomerID
+	SELECT DISTINCT dc.InvoiceNo, dc.InvoiceDate, c.CustomerID
     FROM dataset_cleaned dc
     JOIN customers c ON dc.CustomerID = c.CustomerID;
 ALTER TABLE invoices
-	ADD COLUMN InvoicesID INT AUTO_INCREMENT PRIMARY KEY,
+	ADD COLUMN InvoiceID INT AUTO_INCREMENT PRIMARY KEY,
 	ADD FOREIGN KEY (CustomerID) REFERENCES customers(CustomerID);
 -- check
 SELECT * FROM invoices;
-###
 
-
-#### Note
-SET SQL_SAFE_UPDATES=0; -- turn update safe mode off for updating table easier
-SET SQL_SAFE_UPDATES=1;
-
-CREATE TABLE Customer (
-    CustomerID INT AUTO_INCREMENT PRIMARY KEY,
-	CountryID INT,
-	FOREIGN KEY(CountryID) REFERENCES Countries(CountryID) 
+### invoices_products table
+CREATE TABLE invoices_products (
+    InvoiceID INT,
+    ProductID INT,
+    Quantity INT,
+    PRIMARY KEY (InvoiceID, ProductID),
+    FOREIGN KEY (InvoiceID) REFERENCES invoices(InvoiceID),
+    FOREIGN KEY (ProductID) REFERENCES products(ProductID)
 );
+-- Populate Invoices_Products table
+INSERT IGNORE INTO Invoices_Products (InvoiceID, ProductID, Quantity)
+	SELECT i.InvoiceID, p.ProductID, dc.Quantity
+	FROM dataset_cleaned dc
+	LEFT JOIN invoices i ON dc.InvoiceNo = i.InvoiceNo
+	LEFT JOIN products p ON dc.StockCode = p.StockCode;
 
-SELECT COUNT(*) FROM (SELECT DISTINCT CustomerID FROM dataset_cleaned) AS a; -- 4373
 
-SELECT DISTINCT CustomerID, COUNT(*) AS Count
-FROM dataset_cleaned
-GROUP BY CustomerID
-HAVING Count > 1;
 
--- add CountryID to dataset_cleaned table
-ALTER TABLE dataset_cleaned
-	ADD COLUMN CountryID INT;
-UPDATE dataset_cleaned dc
-	JOIN countries c ON dc.Country = c.CountryName
-	SET dc.CountryID = c.CountryID 
-    WHERE DatasetID > 0;
