@@ -126,6 +126,54 @@ INSERT IGNORE INTO Invoices_Products (InvoiceID, ProductID, Quantity)
 	FROM dataset_cleaned dc
 	LEFT JOIN invoices i ON dc.InvoiceNo = i.InvoiceNo
 	LEFT JOIN products p ON dc.StockCode = p.StockCode;
+-- check
+SELECT * FROM invoices_products;
 
 
+## INSIGHTFUL QUERIES
+
+-- Total Revenue Per Country:
+SELECT c.CountryName, SUM(p.UnitPrice * ip.Quantity) AS TotalRevenue
+	FROM countries c
+	JOIN customers_countries cc ON c.CountryID = cc.CountryID
+	JOIN invoices i ON cc.CustomerID = i.CustomerID
+	JOIN invoices_products ip ON i.InvoiceID = ip.InvoiceID
+	JOIN products p ON ip.ProductID = p.ProductID
+	GROUP BY c.CountryName
+	ORDER BY TotalRevenue DESC;
+
+
+-- Monthly Revenue Trend:
+SELECT DATE_FORMAT(i.InvoiceDate, '%Y-%m') AS Month, SUM(p.UnitPrice * ip.Quantity) AS MonthlyRevenue
+	FROM invoices i
+	JOIN invoices_products ip ON i.InvoiceID = ip.InvoiceID
+	JOIN products p ON ip.ProductID = p.ProductID
+	GROUP BY Month
+	ORDER BY Month;
+
+-- Total Amount of Each Invoice:
+SELECT i.InvoiceID, SUM(p.UnitPrice * ip.Quantity) AS InvoiceTotal
+	FROM invoices i
+	JOIN invoices_products ip ON i.InvoiceID = ip.InvoiceID
+	JOIN products p ON ip.ProductID = p.ProductID
+	GROUP BY i.InvoiceID;
+
+-- Average Invoice Amount:
+SELECT AVG(InvoiceTotal) AS AverageInvoiceAmount
+	FROM (
+		SELECT i.InvoiceID, SUM(p.UnitPrice * ip.Quantity) AS InvoiceTotal
+		FROM invoices i
+		JOIN invoices_products ip ON i.InvoiceID = ip.InvoiceID
+		JOIN products p ON ip.ProductID = p.ProductID
+		GROUP BY i.InvoiceID
+	) AS InvoiceTotals;
+
+
+
+
+
+##### NOTE ######
+SELECT *
+	FROM products
+	WHERE UnitPrice <= 0;
 
