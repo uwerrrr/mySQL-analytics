@@ -130,43 +130,77 @@ INSERT IGNORE INTO Invoices_Products (InvoiceID, ProductID, Quantity)
 SELECT * FROM invoices_products;
 
 
-## INSIGHTFUL QUERIES
+## INSIGHTFUL VIEWS
 
 -- Total Revenue Per Country:
-SELECT c.CountryName, SUM(p.UnitPrice * ip.Quantity) AS TotalRevenue
-	FROM countries c
-	JOIN customers_countries cc ON c.CountryID = cc.CountryID
-	JOIN invoices i ON cc.CustomerID = i.CustomerID
-	JOIN invoices_products ip ON i.InvoiceID = ip.InvoiceID
-	JOIN products p ON ip.ProductID = p.ProductID
-	GROUP BY c.CountryName
-	ORDER BY TotalRevenue DESC;
+CREATE VIEW total_rev_per_country AS
+	SELECT c.CountryName, SUM(p.UnitPrice * ip.Quantity) AS TotalRevenue
+		FROM countries c
+		JOIN customers_countries cc ON c.CountryID = cc.CountryID
+		JOIN invoices i ON cc.CustomerID = i.CustomerID
+		JOIN invoices_products ip ON i.InvoiceID = ip.InvoiceID
+		JOIN products p ON ip.ProductID = p.ProductID
+		GROUP BY c.CountryName
+		ORDER BY TotalRevenue DESC;
 
 
 -- Monthly Revenue Trend:
-SELECT DATE_FORMAT(i.InvoiceDate, '%Y-%m') AS Month, SUM(p.UnitPrice * ip.Quantity) AS MonthlyRevenue
-	FROM invoices i
-	JOIN invoices_products ip ON i.InvoiceID = ip.InvoiceID
-	JOIN products p ON ip.ProductID = p.ProductID
-	GROUP BY Month
-	ORDER BY Month;
-
--- Total Amount of Each Invoice:
-SELECT i.InvoiceID, SUM(p.UnitPrice * ip.Quantity) AS InvoiceTotal
-	FROM invoices i
-	JOIN invoices_products ip ON i.InvoiceID = ip.InvoiceID
-	JOIN products p ON ip.ProductID = p.ProductID
-	GROUP BY i.InvoiceID;
-
--- Average Invoice Amount:
-SELECT AVG(InvoiceTotal) AS AverageInvoiceAmount
-	FROM (
-		SELECT i.InvoiceID, SUM(p.UnitPrice * ip.Quantity) AS InvoiceTotal
+CREATE VIEW monthly_rev_trend AS
+	SELECT DATE_FORMAT(i.InvoiceDate, '%Y-%m') AS Month, SUM(p.UnitPrice * ip.Quantity) AS MonthlyRevenue
 		FROM invoices i
 		JOIN invoices_products ip ON i.InvoiceID = ip.InvoiceID
 		JOIN products p ON ip.ProductID = p.ProductID
-		GROUP BY i.InvoiceID
-	) AS InvoiceTotals;
+		GROUP BY Month
+		ORDER BY Month;
+
+-- Total Amount of Each Invoice:
+CREATE VIEW invoice_totals AS
+	SELECT i.InvoiceID, SUM(p.UnitPrice * ip.Quantity) AS InvoiceTotal
+		FROM invoices i
+		JOIN invoices_products ip ON i.InvoiceID = ip.InvoiceID
+		JOIN products p ON ip.ProductID = p.ProductID
+		GROUP BY i.InvoiceID;
+
+-- Average Invoice Amount:
+CREATE VIEW avg_invoice_amount AS
+	SELECT AVG(InvoiceTotal) AS AverageInvoiceAmount
+		FROM invoice_totals;
+
+
+
+## export views to csv files
+SELECT * 
+	INTO OUTFILE "/usr/local/mysql-8.1.0-macos13-x86_64/exported_views/total_rev_per_country.csv"
+	FIELDS TERMINATED BY ','
+	OPTIONALLY ENCLOSED BY '"'
+	ESCAPED BY '\\'
+	LINES TERMINATED BY '\n'
+    FROM total_rev_per_country;
+
+SELECT * 
+	INTO OUTFILE '/usr/local/mysql-8.1.0-macos13-x86_64/exported_views/monthly_rev_trend.csv'
+	FIELDS TERMINATED BY ','
+	OPTIONALLY ENCLOSED BY '"'
+	ESCAPED BY '\\'
+	LINES TERMINATED BY '\n'
+	FROM monthly_rev_trend;
+
+SELECT * 
+	INTO OUTFILE '/usr/local/mysql-8.1.0-macos13-x86_64/exported_views/invoice_totals.csv'
+	FIELDS TERMINATED BY ','
+	OPTIONALLY ENCLOSED BY '"'
+	ESCAPED BY '\\'
+	LINES TERMINATED BY '\n'
+	FROM invoice_totals;
+
+SELECT * 
+	INTO OUTFILE '/usr/local/mysql-8.1.0-macos13-x86_64/exported_views/avg_invoice_amount.csv'
+	FIELDS TERMINATED BY ','
+	OPTIONALLY ENCLOSED BY '"'
+	ESCAPED BY '\\'
+	LINES TERMINATED BY '\n'
+	FROM avg_invoice_amount;
+
 
 
 
