@@ -16,7 +16,15 @@ Done by Oscar NGUYEN.
 
 #### Entity relationship diagram (ERD) of database after normalization
 
-![ERD](./snippets/erd.png)
+<img src="./snippets/erd.png" width="800">
+
+#### Snippet of creating invoice product table during normalization
+
+<img src="./snippets/invoice_product_table.png" width="800">
+
+#### Snapshot of bar chart of log total revenue per country
+
+<img src="./snippets/plot_log_total_revenue_per_country.png" width="800">
 
 ---
 
