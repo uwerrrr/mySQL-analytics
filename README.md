@@ -2,7 +2,7 @@
 
 This project aims to create a compact MySQL database using an open-source dataset and then leverage Python to perform data analysis and insights.
 
-This is an on-going project.
+Done by Oscar NGUYEN.
 
 ## Access
 - Insights plotting can be views publicly via this [link](https://colab.research.google.com/drive/1OB4XkiwRDLVLcRbHzmtzdvxNzMH-9_qM?usp=sharing).
@@ -33,7 +33,7 @@ This is an on-going project.
   - Showcase and enhance MySQL proficiency.
   - Explore data visualization and plotting capabilities using Python.
 
-- Technology Stack:
+- Technology Stacks:
   - MySQL
   - Python, run on:
     - Jupyter Notebook
@@ -60,7 +60,7 @@ This is an on-going project.
   -  Monthly revenue trend
   -  Total amount of each invoice
   -  Average total invoice amount 
-6.  Those views are imported into a Jupyter Notebook file and plotted with a Python library.
+6.  Those views are imported into a Jupyter Notebook file and plotted with a Python libraries (pandas, matplotlib and numpy).
 
 ---
 
